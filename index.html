@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AV-Service — запись на ТО</title>
+<meta name="theme-color" content="#087DD1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AV-Service">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+.av-quiz-container{max-width:600px;margin:40px auto;font-family:'TildaSans',Arial,sans-serif;background:#fff;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:35px;color:#111;border:1px solid #e8eaf0}
+.av-quiz-container *{box-sizing:border-box}
+.av-quiz-header{text-align:center;margin-bottom:30px}.av-quiz-header h3{margin:0 0 10px;font-size:26px;font-weight:700;letter-spacing:-.5px}.av-quiz-header p{margin:0;color:#666;font-size:16px;line-height:1.5}
+.av-progress-bar{height:4px;background:#e8eaf0;border-radius:2px;margin-bottom:30px;overflow:hidden}.av-progress-fill{height:100%;background:#087DD1;width:14.28%;transition:width .4s ease}
+.av-quiz-step{display:none}.av-quiz-step.active{display:block;animation:avFade .4s ease}
+@keyframes avFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.av-quiz-step h4{margin:0 0 20px;font-size:20px;font-weight:600;border-left:4px solid #087DD1;padding-left:16px}
+.av-options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.av-option-label,.av-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 8px;border:2px solid #e8eaf0;border-radius:6px;cursor:pointer;transition:all .2s;text-align:center;font-weight:500;font-size:15px;background:#fff;color:#111}
+.av-option-label:hover,.av-pick:hover{border-color:#087DD1;background:#f0f7fc}
+.av-option-input,.av-pick input{position:absolute;opacity:0;pointer-events:none}
+.av-option-input:checked+.av-option-label,.av-pick:has(input:checked){border-color:#087DD1;background:#087DD1;color:#fff;box-shadow:0 4px 12px rgba(8,125,209,.25)}
+.av-option-input:focus-visible+.av-option-label,.av-pick:has(input:focus-visible){outline:3px solid #f2a900;outline-offset:2px}
+.av-pick.disabled{opacity:.35;cursor:not-allowed;pointer-events:none;background:#f4f6f8;text-decoration:line-through}
+.av-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin-bottom:15px}
+.av-day{font-size:12px;opacity:.7;text-transform:uppercase;font-weight:600}.av-num{font-size:22px;font-weight:700;line-height:1.2}
+.av-input{width:100%;padding:16px;border:2px solid #e8eaf0;border-radius:6px;font-size:16px;margin-bottom:15px;font-family:inherit;color:#111}
+.av-input:focus{border-color:#087DD1;outline:none;box-shadow:0 0 0 3px rgba(8,125,209,.1)}
+.av-checkbox-group{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.av-checkbox-label{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;padding:12px;border-radius:6px;border:1px solid transparent}
+.av-checkbox-label:hover{background:#f9fafb;border-color:#e8eaf0}.av-checkbox-label input{width:20px;height:20px;accent-color:#087DD1}
+.av-quiz-actions{display:flex;justify-content:space-between;margin-top:30px;gap:12px}
+.av-btn{padding:16px 32px;border:none;border-radius:6px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.av-btn-prev{background:#f0f0f0;color:#666}.av-btn-next{background:#087DD1;color:#fff;flex-grow:1;box-shadow:0 4px 12px rgba(8,125,209,.3)}.av-btn-next:hover{background:#066bb5}
+.av-btn:disabled{opacity:.6;cursor:not-allowed}
+.av-err{color:#b3261e;font-size:14px;min-height:20px;margin:12px 0 0}
+.av-success-message{text-align:center;display:none;padding:30px 0}.av-success-message h4{font-size:24px;margin-bottom:15px;font-weight:700}
+.av-trust-badges{display:flex;justify-content:center;gap:12px;margin-top:25px;font-size:13px;color:#666;flex-wrap:wrap}
+.av-trust-badges span{background:#f4f6f8;padding:8px 14px;border-radius:20px;border:1px solid #e8eaf0}
+.av-lab{display:block;font-size:14px;font-weight:600;margin:0 0 6px}.av-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}textarea.av-input{resize:vertical}
+@media(max-width:480px){.av-row{grid-template-columns:1fr}.av-quiz-container{padding:20px;margin:20px 10px}.av-options-grid{grid-template-columns:1fr 1fr}.av-grid{grid-template-columns:repeat(3,1fr)}.av-btn{padding:14px 20px;font-size:15px}}
+html,body{margin:0;background:#f4f6f8}
+.av-top{display:flex;gap:10px;margin-bottom:20px}.av-top .av-btn{flex:1;padding:12px 10px;font-size:14px}
+.av-my{margin-bottom:20px;font-size:15px}.av-my div{padding:10px 12px;border:1px solid #e8eaf0;border-radius:6px;margin-bottom:8px}.av-my small{color:#666;display:block}
+@media(max-width:600px){.av-quiz-container{margin:0 auto;border-radius:0;box-shadow:none;border:0;min-height:100vh;padding:calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom))}}
+</style>
+
+</head>
+<body>
+<div class="av-quiz-container" id="avQuiz">
+  <div class="av-top"><button type="button" class="av-btn av-btn-prev" id="myBtn" style="display:none">Мои записи</button><button type="button" class="av-btn av-btn-next" id="installBtn" style="display:none">Установить приложение</button></div>
+  <div class="av-my" id="myList" style="display:none"></div>
+  <div class="av-quiz-header">
+    <h3>Запишитесь на ТО за 1 минуту</h3>
+    <p>Ответьте на 7 вопросов и получите скидку 10% при оплате наличными</p>
+  </div>
+  <div class="av-progress-bar"><div class="av-progress-fill" id="progressFill"></div></div>
+
+  <form id="quizForm" novalidate>
+    <div class="av-quiz-step active" data-step="1">
+      <h4>1. Выберите марку вашего автомобиля:</h4>
+      <div class="av-options-grid">
+        <label><input type="radio" name="brand" value="Volkswagen" class="av-option-input"><span class="av-option-label">Volkswagen</span></label>
+        <label><input type="radio" name="brand" value="Audi" class="av-option-input"><span class="av-option-label">Audi</span></label>
+        <label><input type="radio" name="brand" value="Skoda" class="av-option-input"><span class="av-option-label">Skoda</span></label>
+        <label><input type="radio" name="brand" value="Seat" class="av-option-input"><span class="av-option-label">Seat</span></label>
+      </div>
+    </div>
+
+    <div class="av-quiz-step" data-step="2">
+      <h4>2. Расскажите об автомобиле:</h4>
+      <label class="av-lab" for="avModel">Модель</label>
+      <select id="avModel" name="model" class="av-input"></select>
+      <input type="text" id="avModelOther" name="model_other" class="av-input" placeholder="Напишите модель и поколение" style="display:none">
+      <div class="av-row">
+        <div><label class="av-lab" for="avEngine">Объём двигателя, л</label><select id="avEngine" name="engine" class="av-input"></select></div>
+        <div><label class="av-lab" for="avGear">КПП</label><select id="avGear" name="gearbox" class="av-input"></select></div>
+      </div>
+      <label class="av-lab" for="avYear">Год выпуска</label>
+      <select id="avYear" name="year" class="av-input"></select>
+    </div>
+
+    <div class="av-quiz-step" data-step="3">
+      <h4>3. Какой пробег у вашего автомобиля?</h4>
+      <div class="av-options-grid" style="grid-template-columns:1fr">
+        <label><input type="radio" name="mileage" value="До 30 000 км" class="av-option-input"><span class="av-option-label">До 30 000 км (Малое ТО)</span></label>
+        <label><input type="radio" name="mileage" value="30 000 – 60 000 км" class="av-option-input"><span class="av-option-label">30 000 – 60 000 км (Среднее ТО)</span></label>
+        <label><input type="radio" name="mileage" value="60 000 – 100 000 км" class="av-option-input"><span class="av-option-label">60 000 – 100 000 км (Большое ТО)</span></label>
+        <label><input type="radio" name="mileage" value="Более 100 000 км" class="av-option-input"><span class="av-option-label">Более 100 000 км (Комплексное ТО)</span></label>
+      </div>
+      <label class="av-lab" for="avComment">Пожелания и замечания по автомобилю (необязательно)</label>
+      <textarea id="avComment" name="comment" class="av-input" rows="3" maxlength="500" placeholder="Например: стук при повороте, горит лампа, давно не меняли масло"></textarea>
+    </div>
+
+    <div class="av-quiz-step" data-step="4">
+      <h4>4. Что нужно сделать? (можно несколько)</h4>
+      <div class="av-checkbox-group">
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Замена масла"> Замена масла</label>
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Базовое ТО"> Базовое ТО</label>
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Расширенное ТО"> Расширенное ТО</label>
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Диагностика тормозной системы"> Диагностика тормозной системы</label>
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Диагностика ходовой"> Диагностика ходовой</label>
+        <label class="av-checkbox-label"><input type="checkbox" name="extras" value="Диагностика электронных блоков"> Диагностика электронных блоков (есть ошибки)</label>
+      </div>
+    </div>
+
+    <div class="av-quiz-step" data-step="5">
+      <h4>5. Когда вам удобно приехать?</h4>
+      <p style="font-size:15px;color:#666;margin-bottom:20px">Работаем ежедневно с 10:00 до 21:00. Последний приём авто — в 20:00.</p>
+      <p style="font-weight:600;margin-bottom:12px">Выберите дату:</p>
+      <div class="av-grid" id="dateGrid"></div>
+      <p style="font-weight:600;margin:25px 0 12px">Выберите время:</p>
+      <div class="av-grid" id="timeGrid"><span style="color:#666;font-size:15px">Сначала выберите дату</span></div>
+    </div>
+
+    <div class="av-quiz-step" data-step="6">
+      <h4>6. Вы уже являетесь нашим клиентом?</h4>
+      <div class="av-options-grid">
+        <label><input type="radio" name="client" value="Да" class="av-option-input"><span class="av-option-label">Да</span></label>
+        <label><input type="radio" name="client" value="Нет" class="av-option-input"><span class="av-option-label">Нет</span></label>
+      </div>
+      <div id="plateBox" style="display:none">
+        <label class="av-lab" for="avPlate">Госномер автомобиля</label>
+        <input type="text" id="avPlate" name="plate" class="av-input" placeholder="Например: А123ВС 777" maxlength="12" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="av-quiz-step" data-step="7">
+      <h4>Почти готово! 🎉</h4>
+      <p style="font-size:15px;color:#666;margin-bottom:20px">Как с вами связаться, чтобы подтвердить запись? Скидка 10% действует при оплате наличными.</p>
+      <input type="text" name="name" class="av-input" placeholder="Ваше имя" autocomplete="name">
+      <input type="tel" name="phone" id="phoneInput" class="av-input" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+      <div style="margin-bottom:15px">
+        <label class="av-checkbox-label"><input type="radio" name="contact_method" value="WhatsApp" checked> 📱 Написать в WhatsApp</label>
+        <label class="av-checkbox-label"><input type="radio" name="contact_method" value="Telegram"> ✈️ Написать в Telegram</label>
+        <label class="av-checkbox-label"><input type="radio" name="contact_method" value="MAX"> 💬 Написать в MAX</label>
+        <label class="av-checkbox-label"><input type="radio" name="contact_method" value="Звонок"> 📞 Перезвоните мне</label>
+      </div>
+      <div id="maxBox" style="display:none;margin-bottom:15px">
+        <p class="av-lab">Указанный телефон подключён к MAX?</p>
+        <label class="av-checkbox-label"><input type="radio" name="max_same" value="Да"> Да</label>
+        <label class="av-checkbox-label"><input type="radio" name="max_same" value="Нет"> Нет</label>
+        <input type="text" id="maxOther" name="max_other" class="av-input" placeholder="Номер телефона или ник в MAX" style="display:none;margin-top:8px" maxlength="60">
+      </div>
+    </div>
+
+    <p class="av-err" id="avErr" role="alert"></p>
+    <div class="av-quiz-actions" id="quizActions">
+      <button type="button" class="av-btn av-btn-prev" id="prevBtn" style="display:none">← Назад</button>
+      <button type="button" class="av-btn av-btn-next" id="nextBtn">Далее →</button>
+    </div>
+  </form>
+
+  <div class="av-success-message" id="successMessage">
+    <h4>✓ Вы записаны!</h4>
+    <p id="okText" style="color:#666;font-size:16px;line-height:1.5"></p>
+    <p style="margin-top:25px;font-weight:600;font-size:18px">Вопросы? Позвоните: <a href="tel:+74999590090" style="color:#087DD1;text-decoration:none">+7 (499) 959-00-90</a></p>
+    <a href="./" class="av-btn av-btn-next" style="display:block;margin-top:20px;text-decoration:none;text-align:center;color:#fff">Вернуться на главную</a>
+  </div>
+
+  <div class="av-trust-badges"><span>🔒 Без спама</span><span>✅ Гарантия 183 дня</span><span>⭐ Яндекс: Хорошее место</span></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // ВАЖНО: вставьте сюда адрес веб-приложения из Google Apps Script (оканчивается на /exec)
+  var API_URL = 'https://script.google.com/macros/s/AKfycbx9RibZaP-EiLqUi9O2JZFhv7EaLMTEs8xP7bnuYErz3UJeqrig6SuPLOGkWP98ZdPFQw/exec';
+  var SLOTS = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+  var step = 1, total = 7;
+  var $ = function (id) { return document.getElementById(id); };
+  var steps = document.querySelectorAll('.av-quiz-step');
+  var form = $('quizForm'), err = $('avErr'), next = $('nextBtn'), prev = $('prevBtn');
+  var months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  var days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var iso = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var val = function (n) { var c = form.querySelector('input[name="' + n + '"]:checked'); return c ? c.value : ''; };
+
+  var el = function (n) { return form.elements[n]; };
+  var MODELS = {
+    'Volkswagen': ['Polo','Golf','Passat','Tiguan','Jetta','Touareg','Teramont','Touran','Caddy','Transporter'],
+    'Audi': ['A1','A3','A4','A5','A6','A7','A8','Q2','Q3','Q5','Q7','Q8','TT'],
+    'Skoda': ['Octavia','Rapid','Superb','Kodiaq','Karoq','Fabia','Yeti','Kamiq'],
+    'Seat': ['Leon','Ibiza','Ateca','Arona','Toledo','Alhambra']
+  };
+  function fill(id, ph, list) {
+    var s = $(id); s.innerHTML = '<option value="">' + ph + '</option>';
+    list.forEach(function (v) { var o = document.createElement('option'); o.value = o.textContent = v; s.appendChild(o); });
+  }
+  function fillModels(b) {
+    fill('avModel', b ? 'Выберите модель' : 'Сначала выберите марку', b ? MODELS[b].concat('Другая модель') : []);
+    $('avModelOther').style.display = 'none'; $('avModelOther').value = '';
+  }
+  var yrs = []; for (var y = new Date().getFullYear(); y >= 2000; y--) yrs.push(String(y)); yrs.push('Старше 2000');
+  fill('avEngine', 'Выберите', ['1.0','1.2','1.4','1.5','1.6','1.8','2.0','2.5','2.8','3.0','Электро / гибрид','Другой']);
+  fill('avGear', 'Выберите', ['Механика (МКПП)','Автомат (АКПП)','Робот (DSG / S tronic)','Вариатор','Не знаю']);
+  fill('avYear', 'Выберите', yrs);
+  fillModels('');
+
+  // Даты: сегодня и 6 следующих дней
+  var dg = $('dateGrid');
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(); d.setDate(d.getDate() + i);
+    var l = document.createElement('label'); l.className = 'av-pick';
+    l.innerHTML = '<input type="radio" name="date" value="' + iso(d) + '"><span class="av-day">' + days[d.getDay()] + '</span><span class="av-num">' + d.getDate() + '</span><span class="av-day">' + months[d.getMonth()] + '</span>';
+    dg.appendChild(l);
+  }
+
+  // Время: запрашиваем занятые слоты у таблицы
+  function loadSlots(date) {
+    var tg = $('timeGrid');
+    tg.innerHTML = '<span style="color:#666;font-size:15px">Проверяем свободное время…</span>';
+    fetch(API_URL + '?date=' + date).then(function (r) { return r.json(); }).then(function (res) {
+      var now = new Date(), today = date === iso(now), free = 0;
+      tg.innerHTML = '';
+      SLOTS.forEach(function (t) {
+        var off = res.busy.indexOf(t) > -1 || (today && parseInt(t, 10) <= now.getHours());
+        if (!off) free++;
+        var l = document.createElement('label'); l.className = 'av-pick' + (off ? ' disabled' : '');
+        l.innerHTML = '<input type="radio" name="time" value="' + t + '"' + (off ? ' disabled' : '') + '><span class="av-num" style="font-size:17px">' + t + '</span>';
+        tg.appendChild(l);
+      });
+      if (!free) err.textContent = 'На этот день свободного времени нет. Выберите другую дату.';
+    }).catch(function () {
+      tg.innerHTML = '';
+      err.textContent = 'Не удалось загрузить время. Позвоните нам: +7 (499) 959-00-90';
+    });
+  }
+  form.addEventListener('change', function (e) {
+    if (e.target.name === 'date') { err.textContent = ''; loadSlots(e.target.value); }
+    if (e.target.name === 'brand') fillModels(e.target.value);
+    if (e.target.name === 'client') $('plateBox').style.display = e.target.value === 'Да' ? 'block' : 'none';
+    if (e.target.name === 'contact_method') $('maxBox').style.display = e.target.value === 'MAX' ? 'block' : 'none';
+    if (e.target.name === 'max_same') $('maxOther').style.display = e.target.value === 'Нет' ? 'block' : 'none';
+    if (e.target.id === 'avModel') $('avModelOther').style.display = e.target.value === 'Другая модель' ? 'block' : 'none';
+  });
+
+  // Маска телефона
+  $('phoneInput').addEventListener('input', function (e) {
+    var x = e.target.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
+    e.target.value = !x[2] ? (x[1] ? '+7 ' : '') : '+7 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+  });
+
+  function ui() {
+    steps.forEach(function (s) { s.classList.toggle('active', +s.dataset.step === step); });
+    prev.style.display = step === 1 ? 'none' : 'block';
+    next.textContent = step === total ? 'Записаться' : 'Далее →';
+    $('progressFill').style.width = (step / total * 100) + '%';
+    err.textContent = '';
+  }
+
+  function valid() {
+    var msg = '';
+    if (step === 1 && !val('brand')) msg = 'Выберите марку автомобиля.';
+    if (step === 2) {
+      var m = el('model').value;
+      if (!m) msg = 'Выберите модель.';
+      else if (m === 'Другая модель' && !el('model_other').value.trim()) msg = 'Напишите модель автомобиля.';
+      else if (!el('engine').value) msg = 'Выберите объём двигателя.';
+      else if (!el('gearbox').value) msg = 'Выберите тип КПП.';
+      else if (!el('year').value) msg = 'Выберите год выпуска.';
+    }
+    if (step === 3 && !val('mileage')) msg = 'Выберите пробег.';
+    if (step === 4 && !form.querySelector('input[name="extras"]:checked')) msg = 'Выберите хотя бы одну услугу.';
+    if (step === 5 && !val('date')) msg = 'Выберите дату.';
+    else if (step === 5 && !val('time')) msg = 'Выберите свободное время.';
+    if (step === 6) {
+      if (!val('client')) msg = 'Выберите ответ.';
+      else if (val('client') === 'Да' && el('plate').value.replace(/\s/g, '').length < 6) msg = 'Введите госномер автомобиля.';
+    }
+    if (step === 7) {
+      if (el('name').value.trim().length < 2) msg = 'Укажите имя.';
+      else if ($('phoneInput').value.length < 18) msg = 'Введите телефон полностью.';
+      else if (val('contact_method') === 'MAX') {
+        if (!val('max_same')) msg = 'Ответьте, подключён ли указанный телефон к MAX.';
+        else if (val('max_same') === 'Нет' && !el('max_other').value.trim()) msg = 'Укажите номер телефона или ник в MAX.';
+      }
+    }
+    err.textContent = msg;
+    return !msg;
+  }
+
+  next.addEventListener('click', function () {
+    if (!valid()) return;
+    if (step < total) { step++; ui(); } else submit();
+  });
+  prev.addEventListener('click', function () { if (step > 1) { step--; ui(); } });
+
+  function submit() {
+    next.disabled = true; next.textContent = 'Отправка…';
+    var extras = Array.prototype.map.call(form.querySelectorAll('input[name="extras"]:checked'), function (c) { return c.value; }).join(', ') || 'Нет';
+    var data = {
+      brand: val('brand'), model: el('model').value === 'Другая модель' ? el('model_other').value.trim() : el('model').value,
+      engine: el('engine').value, gearbox: el('gearbox').value, year: el('year').value, mileage: val('mileage'), comment: el('comment').value.trim(), extras: extras,
+      date: val('date'), time: val('time'), name: form.name.value.trim(), phone: form.phone.value, contact_method: val('contact_method'),
+      client: val('client'), plate: val('client') === 'Да' ? el('plate').value.trim().toUpperCase() : '',
+      max_same: val('contact_method') === 'MAX' ? val('max_same') : '', max_other: val('max_same') === 'Нет' ? el('max_other').value.trim() : ''
+    };
+    fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.ok) {
+          form.style.display = 'none'; $('quizActions').style.display = 'none'; document.querySelector('.av-progress-bar').style.display = 'none';
+          saveMy(data);
+          var dt = data.date.split('-');
+          $('okText').textContent = 'Ждём вас ' + dt[2] + '.' + dt[1] + ' в ' + data.time + '. Менеджер свяжется с вами в течение 15 минут, чтобы подтвердить запись. Скидка 10% действует при оплате наличными.';
+          $('successMessage').style.display = 'block';
+          // ym(XXXXXXXX, 'reachGoal', 'quiz_complete'); // Яндекс.Метрика: подставьте номер счётчика
+        } else if (res.error === 'busy') {
+          step = 5; ui(); loadSlots(data.date);
+          err.textContent = 'Это время только что заняли. Выберите другое.';
+          reset();
+        } else throw new Error(res.error);
+      })
+      .catch(function () { err.textContent = 'Не удалось отправить. Позвоните нам: +7 (499) 959-00-90'; reset(); });
+    function reset() { next.disabled = false; next.textContent = step === total ? 'Записаться' : 'Далее →'; }
+  }
+
+  // Мои записи (хранятся на этом телефоне)
+  function myList() { try { return JSON.parse(localStorage.getItem('avBookings') || '[]'); } catch (e) { return []; } }
+  function saveMy(d) { var l = myList(); l.unshift({ date: d.date, time: d.time, car: d.brand + ' ' + d.model, works: d.extras }); try { localStorage.setItem('avBookings', JSON.stringify(l.slice(0, 20))); } catch (e) {} showMy(); }
+  function showMy() { $('myBtn').style.display = myList().length ? 'block' : 'none'; }
+  $('myBtn').addEventListener('click', function () {
+    var box = $('myList');
+    if (box.style.display === 'block') { box.style.display = 'none'; return; }
+    box.innerHTML = myList().map(function (b) { var d = b.date.split('-'); return '<div><b>' + d[2] + '.' + d[1] + '.' + d[0] + ' в ' + b.time + '</b><small>' + b.car.replace(/</g, '&lt;') + ' · ' + b.works.replace(/</g, '&lt;') + '</small></div>'; }).join('');
+    box.style.display = 'block';
+  });
+  showMy();
+
+  // Кнопка установки
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  var deferred;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; if (!standalone) $('installBtn').style.display = 'block'; });
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone) {
+    $('installBtn').style.display = 'block';
+    $('installBtn').textContent = 'Как установить на iPhone';
+    $('installBtn').onclick = function () { alert('Нажмите «Поделиться» внизу экрана Safari, затем «На экран Домой».'); };
+  } else $('installBtn').onclick = function () { if (deferred) { deferred.prompt(); $('installBtn').style.display = 'none'; } };
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+  ui();
+});
+</script>
+
+</body>
+</html>
